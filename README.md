@@ -49,7 +49,7 @@ running of course.
 
 Prerequisites: Cookie Editor browser extension, Chrome version 110 (Latest as of 18 Feb 2023)
 
-1. Head to https://github.com/TheTrustyPwo/ZBSchools-Macro/releases/tag/v1.0 and download the release zip file
+1. Head to https://github.com/TheTrustyPwo/ZBSchools-Macro/releases/ and download the release zip file
 2. Once complete, extract the zip file
 3. In the extracted folder, you should see 3 files, namely `main.exe`, `config.json` and `cookies.json`
 4. Go to https://www.zbschools.sg/ and sign in
