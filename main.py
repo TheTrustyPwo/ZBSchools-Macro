@@ -20,6 +20,9 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
 with open('config.json', 'r') as fp:
     CONFIG = json.load(fp)
 
+logging.info(f'LAST SOLVED ARTICLE ID: {config["lastSolvedArticleID"]}')
+logging.info(f'ARTICLES PER SESSION: {config["articlesPerSession"]}')
+
 # Create a new instance of the Chrome driver
 driver = webdriver.Chrome(executable_path='chromedriver.exe')
 
@@ -90,7 +93,7 @@ def solve_article(article_id: int):
             match = re.search(f'{prefix}(.{{0,4}}){suffix}', passage)
             # Handle error cases
             if match is None:
-                logging.error(f'Solving failed on Article {article_id} - Q{i} with data {prefix} | {suffix}')
+                logging.error(f'Solving failed on Article {article_id} - Q{i + 1} with data {prefix} | {suffix}')
                 answer = random.choice(options)
             else:
                 answer = match.group(1).strip()
@@ -131,14 +134,17 @@ def solve_article(article_id: int):
 def main():
     time1 = time.time()
     score_gained = 0
-    for _ in range(1):
+    for _ in range(CONFIG['articlesPerSession']):
         CONFIG['lastSolvedArticleID'] += 1
         score_gained += solve_article(CONFIG['lastSolvedArticleID'])
     time2 = time.time()
+
     print(f'Took {time2 - time1} seconds for {score_gained} score')
+
+    # Saving new last solved article ID
     with open('config.json', 'w') as fp:
         json.dump(CONFIG, fp)
-    time.sleep(20)
+
     driver.quit()
 
 

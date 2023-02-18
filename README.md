@@ -47,7 +47,19 @@ running of course.
 <!-- INSTALLATION -->
 ## Installation
 
-Coming Soon
+Prerequisites: Cookie Editor browser extension, Chrome version 110 (Latest as of 18 Feb 2023)
+
+1. Head to https://github.com/TheTrustyPwo/ZBSchools-Macro/releases/tag/v1.0 and download the release zip file
+2. Once complete, extract the zip file
+3. In the extracted folder, you should see 3 files, namely `main.exe`, `config.json` and `cookies.json`
+4. Go to https://www.zbschools.sg/ and sign in
+5. Using the <a href="https://chrome.google.com/webstore/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm?hl=en">Cookie Editor</a> extension, export your cookies which should copy them to your clipboard
+6. Open cookies.json and clear all the text in the file and paste your cookies in
+7. Note that you need to do this every time your cookies change (Which depends on your activity)
+8. You may choose to modify `articlesPerSession` in `config.json` which determines how many articles the script will solve every time you run the executable (If you want to run it overnight, just set it to a large number)
+9. Do not touch `lastSolvedArticleID` unless you know what you are doing as this prevents repeatedly solving of articles
+10. Finally, run main.exe which should open a terminal
+
 
 
 <!-- LICENSE -->
