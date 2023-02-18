@@ -7,6 +7,7 @@ import selenium.common
 from pypinyin import pinyin
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
 
 
 # Initialize constants
@@ -22,9 +23,14 @@ with open('config.json', 'r') as fp:
 
 logging.info(f'LAST SOLVED ARTICLE ID: {CONFIG["lastSolvedArticleID"]}')
 logging.info(f'ARTICLES PER SESSION: {CONFIG["articlesPerSession"]}')
+logging.info(f'HEADLESS: {CONFIG["headless"]}')
 
 # Create a new instance of the Chrome driver
-driver = webdriver.Chrome(executable_path='chromedriver.exe')
+service = Service(r'chromedriver.exe')
+options = webdriver.ChromeOptions()
+options.add_experimental_option('excludeSwitches', ['enable-logging'])
+options.headless = CONFIG['headless']
+driver = webdriver.Chrome(service=service, options=options)
 
 # Initialize cookies
 # Enables network tracking to use the Network.setCookie method
@@ -82,7 +88,7 @@ def solve_article(article_id: int):
     for i, question in enumerate(questions):
         # Retrieving question title and MCQ options
         title = question.find_element(By.CLASS_NAME, 'content_plate_inline')
-        options = list(map(lambda v: v.text, question.find_elements(By.CLASS_NAME, 'mcq_option_text')))
+        mcq = list(map(lambda v: v.text, question.find_elements(By.CLASS_NAME, 'mcq_option_text')))
 
         # 2 types of question: Pinying or Fill in the word
         if '_' in title.text:
@@ -94,7 +100,7 @@ def solve_article(article_id: int):
             # Handle error cases
             if match is None:
                 logging.error(f'Solving failed on Article {article_id} - Q{i + 1} with data {prefix} | {suffix}')
-                answer = random.choice(options)
+                answer = random.choice(mcq)
             else:
                 answer = match.group(1).strip()
             logging.debug(f'{prefix} | {suffix} | {answer}')
@@ -107,11 +113,11 @@ def solve_article(article_id: int):
             logging.debug(f'{keyword} | {answer}')
 
         # Find the option number and click the corresponding radio button
-        if answer in options:
-            choice = options.index(answer)
-        elif answer[-len(options[0]):] in options:
-            logging.warning(f'Adjusting answer from {answer} to {answer[-len(options[0]):]}')
-            choice = options.index(answer[-len(options[0]):])
+        if answer in mcq:
+            choice = mcq.index(answer)
+        elif answer[-len(mcq[0]):] in mcq:
+            logging.warning(f'Adjusting answer from {answer} to {answer[-len(mcq[0]):]}')
+            choice = mcq.index(answer[-len(mcq[0]):])
         else:
             logging.warning(f'Option does not exist; Choosing a random one')
             choice = random.randint(0, 3)
@@ -131,19 +137,34 @@ def solve_article(article_id: int):
         return 0
 
 
-def main():
-    time1 = time.time()
-    score_gained = 0
-    for _ in range(CONFIG['articlesPerSession']):
-        CONFIG['lastSolvedArticleID'] += 1
-        score_gained += solve_article(CONFIG['lastSolvedArticleID'])
-    time2 = time.time()
-
-    print(f'Took {time2 - time1} seconds for {score_gained} score')
-
-    # Saving new last solved article ID
+def save_config():
+    """
+    Utility function to dump CONFIG data into config.json
+    :return:
+    """
     with open('config.json', 'w') as fp:
         json.dump(CONFIG, fp)
+
+
+def main():
+    time1 = time.time()
+
+    articles_solved = 0
+    score_gained = 0
+    while articles_solved < CONFIG['articlesPerSession']:
+        # Automatically saves config.json every 10 articles
+        if CONFIG['lastSolvedArticleID'] % 10 == 0:
+            save_config()
+        CONFIG['lastSolvedArticleID'] += 1
+        score = solve_article(CONFIG['lastSolvedArticleID'])
+        articles_solved += score > 0
+        score_gained += score
+
+    time2 = time.time()
+
+    save_config()
+    print(f'\nPROGRAM FINISHED\n{time2 - time1} seconds have elapsed \n{articles_solved} articles have been solved \n{score_gained} points have been gained\n')
+    input('Press Enter to quit')
 
     driver.quit()
 
