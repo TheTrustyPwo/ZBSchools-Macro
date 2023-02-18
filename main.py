@@ -20,8 +20,8 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
 with open('config.json', 'r') as fp:
     CONFIG = json.load(fp)
 
-logging.info(f'LAST SOLVED ARTICLE ID: {config["lastSolvedArticleID"]}')
-logging.info(f'ARTICLES PER SESSION: {config["articlesPerSession"]}')
+logging.info(f'LAST SOLVED ARTICLE ID: {CONFIG["lastSolvedArticleID"]}')
+logging.info(f'ARTICLES PER SESSION: {CONFIG["articlesPerSession"]}')
 
 # Create a new instance of the Chrome driver
 driver = webdriver.Chrome(executable_path='chromedriver.exe')
