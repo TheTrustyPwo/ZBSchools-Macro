@@ -44,6 +44,13 @@ solved in roughly 3.5 seconds, and after some benchmarking, it was found that 4 
 points could be obtained within the timespan of 24 hours, if the script is continuously
 running of course.
 
+Some awesome features:
+* Lightweight
+* Runs in the background
+* Solves nearly all questions
+* Gain 4 million points per day
+* Instant setup and configurable
+
 ### Disclaimer
 Use this program at your own risk. According to <a href="https://www.sph.com.sg/legal/website_tnc/">SPH Terms and Conditions</a>
 Section 6 Part D, users must not "use any automated process, use any kind of scripting software or bots or service to access and/or use the Site and/or Services".
