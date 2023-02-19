@@ -1,36 +1,25 @@
 import re
+import io
 import sys
 import time
 import json
 import random
 import logging
+import requests
 import traceback
+import subprocess
 import selenium.common
+from tqdm import tqdm
 from pypinyin import pinyin
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.alert import Alert
-
-
-def show_exception_and_exit(exc_type, exc_value, tb):
-    """
-    Top level exception handler to keep application on an unhandled exception
-    :param exc_type: Exception Type
-    :param exc_value: Exception Value
-    :param tb: Traceback Type
-    :return:
-    """
-    traceback.print_exception(exc_type, exc_value, tb)
-    input("Press Enter to quit")
-    sys.exit(-1)
-
-
-# Overriding exception handler
-sys.excepthook = show_exception_and_exit
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 # Initialize constants
+VERSION = '1.3'
 MCQ_CHOICE = ('A', 'B', 'C', 'D')
 PASSAGE_TEMPLATE_URL = 'https://www.zbschools.sg/stories-{id}'
 QUESTION_TEMPLATE_URL = 'https://www.zbschools.sg/cos/o.x?c=/ca7_zbs/zbs&func=quiz&tid=1&rid={id}&litebox=0&popup=1'
@@ -45,8 +34,36 @@ logging.info(f'LAST SOLVED ARTICLE ID: {CONFIG["lastSolvedArticleID"]}')
 logging.info(f'ARTICLES PER SESSION: {CONFIG["articlesPerSession"]}')
 logging.info(f'HEADLESS: {CONFIG["headless"]}')
 
+
+def save_config():
+    """
+    Utility function to dump CONFIG data into config.json
+    :return:
+    """
+    with open('config.json', 'w') as fp:
+        json.dump(CONFIG, fp)
+
+
+def show_exception_and_exit(exc_type, exc_value, tb):
+    """
+    Top level exception handler to keep application on an unhandled exception
+    :param exc_type: Exception Type
+    :param exc_value: Exception Value
+    :param tb: Traceback Type
+    :return:
+    """
+    traceback.print_exception(exc_type, exc_value, tb)
+    save_config()
+    input("Press Enter to quit")
+    sys.exit(-1)
+
+
+# Overriding exception handler
+sys.excepthook = show_exception_and_exit
+
+
 # Create a new instance of the Chrome driver
-service = Service(r'chromedriver.exe')
+service = Service(ChromeDriverManager().install())
 options = webdriver.ChromeOptions()
 options.add_experimental_option('excludeSwitches', ['enable-logging'])
 options.headless = CONFIG['headless']
@@ -166,16 +183,45 @@ def accept_available_alert():
         pass
 
 
-def save_config():
-    """
-    Utility function to dump CONFIG data into config.json
-    :return:
-    """
-    with open('config.json', 'w') as fp:
-        json.dump(CONFIG, fp)
+def check_for_updates():
+    logging.info('Checking for updates...')
+    latest = requests.get('https://raw.githubusercontent.com/TheTrustyPwo/ZBSchools-Macro/main/version.txt').text.partition("\n")[0]
+    if VERSION == latest:
+        logging.info('No new updates found!')
+        return
+
+    logging.info(f'Newer version v{latest} found! Downloading from github now...')
+    file_name = f'ZBSchools-Macro-v{latest}-Windows-amd64'
+    response = requests.get(f'https://github.com/BridgeSenseDev/Dank-Memer-Grinder/releases/download/v{latest}/{file_name}', stream=True)
+    file_size = int(response.headers.get('Content-Length', 0))
+
+    # Create a progress bar with the total file size
+    progress_bar = tqdm(total=file_size, unit='iB', unit_scale=True)
+
+    # Open a file stream to save the file
+    with open(file_name, 'wb') as f:
+        # Iterate over the response content and write it to the file
+        for chunk in response.iter_content(chunk_size=1024):
+            # Update the progress bar with the current chunk size
+            progress_bar.update(len(chunk))
+            f.write(chunk)
+
+    # Close the progress bar
+    progress_bar.close()
+
+    # Open the downloaded zip file
+    with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+        with open("main.exe", "wb") as f:
+            f.write(z.read("main.exe"))
+
+    # Exit current instance and run the updated version
+    subprocess.Popen("./main.exe")
+    sys.exit(0)
 
 
 def main():
+    check_for_updates()
+
     time1 = time.perf_counter()
 
     articles_solved = 0
