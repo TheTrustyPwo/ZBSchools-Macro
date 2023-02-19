@@ -1,13 +1,33 @@
 import re
+import sys
 import time
 import json
-import logging
 import random
+import logging
+import traceback
 import selenium.common
 from pypinyin import pinyin
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.alert import Alert
+
+
+def show_exception_and_exit(exc_type, exc_value, tb):
+    """
+    Top level exception handler to keep application on an unhandled exception
+    :param exc_type: Exception Type
+    :param exc_value: Exception Value
+    :param tb: Traceback Type
+    :return:
+    """
+    traceback.print_exception(exc_type, exc_value, tb)
+    input("Press Enter to quit")
+    sys.exit(-1)
+
+
+# Overriding exception handler
+sys.excepthook = show_exception_and_exit
 
 
 # Initialize constants
@@ -96,10 +116,11 @@ def solve_article(article_id: int):
             prefix, suffix = re.search('(.*?)_+(.*)', title.text).groups()
             prefix = clean(prefix)[-3:]
             suffix = clean(suffix)[:3]
-            match = re.search(f'{prefix}(.{{0,4}}){suffix}', passage)
+            length = len(mcq[0])
+            match = re.search(f'{prefix}(.{{{length}}}){suffix}', passage)
             # Handle error cases
             if match is None:
-                logging.error(f'Solving failed on Article {article_id} - Q{i + 1} with data {prefix} | {suffix}')
+                logging.error(f'Could not locate answer on Article {article_id} - Q{i + 1} with data {prefix} | {suffix}')
                 answer = random.choice(mcq)
             else:
                 answer = match.group(1).strip()
@@ -115,9 +136,6 @@ def solve_article(article_id: int):
         # Find the option number and click the corresponding radio button
         if answer in mcq:
             choice = mcq.index(answer)
-        elif answer[-len(mcq[0]):] in mcq:
-            logging.warning(f'Adjusting answer from {answer} to {answer[-len(mcq[0]):]}')
-            choice = mcq.index(answer[-len(mcq[0]):])
         else:
             logging.warning(f'Option does not exist; Choosing a random one')
             choice = random.randint(0, 3)
@@ -137,6 +155,17 @@ def solve_article(article_id: int):
         return 0
 
 
+def accept_available_alert():
+    """
+    Utility function to accept an alert if available
+    :return:
+    """
+    try:
+        Alert(driver).accept()
+    except selenium.common.NoAlertPresentException:
+        pass
+
+
 def save_config():
     """
     Utility function to dump CONFIG data into config.json
@@ -147,7 +176,7 @@ def save_config():
 
 
 def main():
-    time1 = time.time()
+    time1 = time.perf_counter()
 
     articles_solved = 0
     score_gained = 0
@@ -156,11 +185,18 @@ def main():
         if CONFIG['lastSolvedArticleID'] % 10 == 0:
             save_config()
         CONFIG['lastSolvedArticleID'] += 1
-        score = solve_article(CONFIG['lastSolvedArticleID'])
-        articles_solved += score > 0
-        score_gained += score
+        # noinspection PyBroadException
+        try:
+            score = solve_article(CONFIG['lastSolvedArticleID'])
+            articles_solved += score > 0
+            score_gained += score
+        except Exception:
+            logging.error(f'Skipping Article {CONFIG["lastSolvedArticleID"]} due to unexpected error')
+            # Reloads the page to clear input and closes the Leave Page Confirmation alert
+            driver.refresh()
+            accept_available_alert()
 
-    time2 = time.time()
+    time2 = time.perf_counter()
 
     save_config()
     print(f'\nPROGRAM FINISHED\n{time2 - time1} seconds have elapsed \n{articles_solved} articles have been solved \n{score_gained} points have been gained\n')
