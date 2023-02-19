@@ -186,7 +186,7 @@ def accept_available_alert():
 
 def check_for_updates():
     logging.info('Checking for updates...')
-    latest = requests.get('https://raw.githubusercontent.com/TheTrustyPwo/ZBSchools-Macro/main/version.txt').text.partition("\n")[0]
+    latest = requests.get('https://raw.githubusercontent.com/TheTrustyPwo/ZBSchools-Macro/master/version.txt').text.partition("\n")[0]
     if VERSION == latest:
         logging.info('No new updates found!')
         return
@@ -211,7 +211,7 @@ def check_for_updates():
     progress_bar.close()
 
     # Open the downloaded zip file
-    with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+    with zipfile.ZipFile(io.BytesIO(response.content)) as z:
         with open("main.exe", "wb") as f:
             f.write(z.read("main.exe"))
 
