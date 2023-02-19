@@ -192,7 +192,7 @@ def check_for_updates():
 
     logging.info(f'Newer version v{latest} found! Downloading from github now...')
     file_name = f'ZBSchools-Macro-v{latest}-Windows-amd64'
-    response = requests.get(f'https://github.com/BridgeSenseDev/Dank-Memer-Grinder/releases/download/v{latest}/{file_name}', stream=True)
+    response = requests.get(f'https://github.com/TheTrustyPwo/ZBSchools-Macro/releases/download/v{latest}/{file_name}', stream=True)
     file_size = int(response.headers.get('Content-Length', 0))
 
     # Create a progress bar with the total file size
