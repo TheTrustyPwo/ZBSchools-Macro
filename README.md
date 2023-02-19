@@ -4,7 +4,7 @@
   [![Stargazers][stars-shield]][stars-url]
   [![Issues][issues-shield]][issues-url]
   [![GNU GPLv3 License][license-shield]][license-url]
-</p>
+</div>
 
 
 <!-- PROJECT TITLE -->
