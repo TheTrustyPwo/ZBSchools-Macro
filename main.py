@@ -4,6 +4,7 @@ import sys
 import time
 import json
 import random
+import zipfile
 import logging
 import requests
 import traceback
