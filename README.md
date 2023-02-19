@@ -1,9 +1,20 @@
+<!--suppress ALL -->
 <div align="center">
-  [![Contributors][contributors-shield]][contributors-url]
-  [![Forks][forks-shield]][forks-url]
-  [![Stargazers][stars-shield]][stars-url]
-  [![Issues][issues-shield]][issues-url]
-  [![GNU GPLv3 License][license-shield]][license-url]
+  <a href="https://github.com/TheTrustyPwo/ZBSchools-Macro/graphs/contributors" target="_blank">
+    <img src="https://img.shields.io/github/contributors/TheTrustyPwo/ZBSchools-Macro.svg?style=for-the-badge" alt="Contributors">
+  </a>
+  <a href="https://github.com/TheTrustyPwo/ZBSchools-Macro/network/members" target="_blank">
+    <img src="https://img.shields.io/github/forks/TheTrustyPwo/ZBSchools-Macro.svg?style=for-the-badge" alt="Forks">
+  </a>
+  <a href="https://github.com/TheTrustyPwo/ZBSchools-Macro/stargazers" target="_blank">
+    <img src="https://img.shields.io/github/stars/TheTrustyPwo/ZBSchools-Macro.svg?style=for-the-badge" alt="Contributors">
+  </a>
+  <a href="https://github.com/TheTrustyPwo/ZBSchools-Macro/issues" target="_blank">
+    <img src="https://img.shields.io/github/issues/TheTrustyPwo/ZBSchools-Macro.svg?style=for-the-badge" alt="Forks">
+  </a>
+  <a href="https://github.com/TheTrustyPwo/ZBSchools-Macro/blob/master/LICENSE.txt" target="_blank">
+    <img src="https://img.shields.io/github/license/TheTrustyPwo/ZBSchools-Macro.svg?style=for-the-badge" alt="Contributors">
+  </a>
 </div>
 
 
@@ -127,16 +138,3 @@ TheTrustyPwo - Pwo#0001 - thetrustypwo@gmail.com
 Project Link: [https://github.com/TheTrustyPwo/ZBSchools-Macro](https://github.com/TheTrustyPwo/ZBSchools-Macro)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
-
-
-<!-- MARKDOWN LINKS & IMAGES -->
-[contributors-shield]: https://img.shields.io/github/contributors/TheTrustyPwo/ZBSchools-Macro.svg?style=for-the-badge
-[contributors-url]: https://github.com/TheTrustyPwo/ZBSchools-Macro/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/TheTrustyPwo/ZBSchools-Macro.svg?style=for-the-badge
-[forks-url]: https://github.com/TheTrustyPwo/ZBSchools-Macro/network/members
-[stars-shield]: https://img.shields.io/github/stars/TheTrustyPwo/ZBSchools-Macro.svg?style=for-the-badge
-[stars-url]: https://github.com/TheTrustyPwo/ZBSchools-Macro/stargazers
-[issues-shield]: https://img.shields.io/github/issues/TheTrustyPwo/ZBSchools-Macro.svg?style=for-the-badge
-[issues-url]: https://github.com/TheTrustyPwo/ZBSchools-Macro/issues
-[license-shield]: https://img.shields.io/github/license/TheTrustyPwo/ZBSchools-Macro.svg?style=for-the-badge
-[license-url]: https://github.com/TheTrustyPwo/ZBSchools-Macro/blob/master/LICENSE.txt
