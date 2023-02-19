@@ -67,7 +67,8 @@ sys.excepthook = show_exception_and_exit
 service = Service(ChromeDriverManager().install())
 options = webdriver.ChromeOptions()
 options.add_experimental_option('excludeSwitches', ['enable-logging'])
-options.headless = CONFIG['headless']
+if CONFIG['headless']:
+    options.add_argument('--headless')
 driver = webdriver.Chrome(service=service, options=options)
 
 # Initialize cookies
