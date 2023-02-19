@@ -73,7 +73,9 @@ Prerequisites: Cookie Editor browser extension, Chrome version 110 (Latest as of
 6. Open cookies.json and clear all the text in the file and paste your cookies in
 7. Note that you need to do this every time your cookies change (Which depends on your activity)
 8. Modify `config.json` to your liking. Refer to the section below.
-10. Finally, run main.exe which should open a terminal
+9. Finally, run main.exe which will open a terminal
+
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 
 <!-- CONFIGURATION -->
