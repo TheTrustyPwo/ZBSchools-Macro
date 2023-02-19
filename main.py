@@ -1,23 +1,19 @@
+import json
+import logging
+import random
 import re
-import io
 import sys
 import time
-import json
-import random
-import zipfile
-import logging
-import requests
 import traceback
-import subprocess
+
+import requests
 import selenium.common
-from tqdm import tqdm
 from pypinyin import pinyin
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.alert import Alert
+from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
-
 
 # Initialize constants
 VERSION = '1.3'
@@ -186,39 +182,16 @@ def accept_available_alert():
 
 
 def check_for_updates():
+    """
+    Helper function to check for new updates
+    :return:
+    """
     logging.info('Checking for updates...')
     latest = requests.get('https://raw.githubusercontent.com/TheTrustyPwo/ZBSchools-Macro/master/version.txt').text.partition("\n")[0]
     if VERSION == latest:
         logging.info('No new updates found!')
         return
-
-    logging.info(f'Newer version v{latest} found! Downloading from github now...')
-    file_name = f'ZBSchools-Macro-v{latest}-Windows-amd64'
-    response = requests.get(f'https://github.com/TheTrustyPwo/ZBSchools-Macro/releases/download/v{latest}/{file_name}', stream=True)
-    file_size = int(response.headers.get('Content-Length', 0))
-
-    # Create a progress bar with the total file size
-    progress_bar = tqdm(total=file_size, unit='iB', unit_scale=True)
-
-    # Open a file stream to save the file
-    with open(file_name, 'wb') as f:
-        # Iterate over the response content and write it to the file
-        for chunk in response.iter_content(chunk_size=1024):
-            # Update the progress bar with the current chunk size
-            progress_bar.update(len(chunk))
-            f.write(chunk)
-
-    # Close the progress bar
-    progress_bar.close()
-
-    # Open the downloaded zip file
-    with zipfile.ZipFile(io.BytesIO(response.content)) as z:
-        with open("main.exe", "wb") as f:
-            f.write(z.read("main.exe"))
-
-    # Exit current instance and run the updated version
-    subprocess.Popen("./main.exe")
-    sys.exit(0)
+    logging.info(f'Newer version v{latest} found! Please download it for maximum user experience.')
 
 
 def main():
