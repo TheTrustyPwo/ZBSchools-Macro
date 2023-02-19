@@ -42,13 +42,19 @@ solved in roughly 3.5 seconds, and after some benchmarking, it was found that 4 
 points could be obtained within the timespan of 24 hours, if the script is continuously
 running of course.
 
+### Disclaimer
+Use this program at your own risk. According to <a href="https://www.sph.com.sg/legal/website_tnc/">SPH Terms and Conditions</a>
+Section 6 Part D, users must not "not to use any automated process, use any kind of scripting software or bots or service to access and/or use the Site and/or Services".
+This program is merely demonstrating the capabilities of the Selenium webdriver, and you are liable
+for all consequences of your actions.
+
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
 <!-- INSTALLATION -->
 ## Installation
 
-Prerequisites: Cookie Editor browser extension, Chrome version 110 (Latest as of 18 Feb 2023)
+Prerequisites: Cookie Editor browser extension, Chrome version 110 (Latest as of 19 Feb 2023)
 
 1. Head to https://github.com/TheTrustyPwo/ZBSchools-Macro/releases/ and download the release zip file
 2. Once complete, extract the zip file
