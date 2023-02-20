@@ -1,6 +1,6 @@
 {
-  "lastSolvedArticleID": 14,
-  "articlesPerThread": 10,
-  "threads": 4,
-  "headless": false
+    "lastProcessedArticleID": 14,
+    "articlesPerSession": 100,
+    "threads": 4,
+    "headless": true
 }
