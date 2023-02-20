@@ -29,6 +29,7 @@ TOTAL_SCORE_GAINED = 0
 CONFIG_LOCK = threading.Lock()
 
 os.environ['WDM_LOG'] = '0'  # Silence webdriver log messages
+logging.getLogger(requests.packages.urllib3.__package__).setLevel(logging.ERROR)
 logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
 
 # Load from configuration file
@@ -253,12 +254,16 @@ def check_for_updates():
 
 
 def main():
+    global threadLocal
     check_for_updates()
 
     time1 = time.perf_counter()
+    pool = ThreadPool(CONFIG['threads'])
     start_id = CONFIG['lastProcessedArticleID'] + 1
     amount = CONFIG['articlesPerSession']
-    ThreadPool(CONFIG['threads']).map(solve_article, range(start_id, start_id + amount))
+    pool.map(solve_article, range(start_id, start_id + amount))
+    del threadLocal
+    pool.close()
     time2 = time.perf_counter()
 
     print(f'\nPROGRAM FINISHED\n'
