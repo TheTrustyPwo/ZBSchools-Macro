@@ -46,7 +46,7 @@ def save_config():
     """
     CONFIG_LOCK.acquire()
     with open('config.json', 'w') as fp:
-        json.dump(CONFIG, fp)
+        json.dump(CONFIG, fp, indent=4)
     CONFIG_LOCK.release()
 
 
@@ -114,7 +114,8 @@ def solve_article(driver: webdriver, article_id: int):
     :param article_id: ID of the article, i.e. the number after `stories-`
     :return:
     """
-    logging.info(f'Processing Article {article_id}')
+    global ARTICLES_SOLVED, TOTAL_SCORE_GAINED
+    logging.debug(f'Processing Article {article_id}')
     driver.get(PASSAGE_TEMPLATE_URL.format(id=article_id))
 
     # Process passage text to be used to answer questions later on
@@ -122,8 +123,8 @@ def solve_article(driver: webdriver, article_id: int):
 
     # Invalid article as there are no paragraphs
     if not paragraphs:
-        logging.warning('Skipping as invalid ID')
-        return 0
+        logging.warning(f'Skipping Invalid Article {article_id}')
+        return
 
     # Process and clean paragraphs into passage variable
     passage = ''.join(list(map(lambda v: v.text, paragraphs)))
@@ -148,7 +149,7 @@ def solve_article(driver: webdriver, article_id: int):
             match = re.search(f'{prefix}(.{{{length}}}){suffix}', passage)
             # Handle error cases
             if match is None:
-                logging.error(
+                logging.debug(
                     f'Could not locate answer on Article {article_id} - Q{i + 1} with data {prefix} | {suffix}')
                 answer = random.choice(mcq)
             else:
@@ -166,7 +167,7 @@ def solve_article(driver: webdriver, article_id: int):
         if answer in mcq:
             choice = mcq.index(answer)
         else:
-            logging.warning(f'Option does not exist; Choosing a random one')
+            logging.debug(f'Option {answer} does not exist; Choosing a random one')
             choice = random.randint(0, 3)
         question.find_element(By.CSS_SELECTOR, f'[value={MCQ_CHOICE[choice]}]').click()
 
@@ -177,11 +178,12 @@ def solve_article(driver: webdriver, article_id: int):
     try:
         driver.find_element(By.CLASS_NAME, 'btn-submit').click()
         score = int(driver.find_element(By.CLASS_NAME, 'score').find_element(By.TAG_NAME, 'span').text[:-2]) + 100
-        logging.info(f'Solved successfully (+{score} points)')
-        return score
+        logging.info(f'Solved Article {article_id} (+{score} points)')
+        ARTICLES_SOLVED += 1
+        TOTAL_SCORE_GAINED += score
     except selenium.common.NoSuchElementException:
         # May happen occasionally
-        return 0
+        return
 
 
 def accept_available_alert(driver: webdriver):
@@ -216,7 +218,7 @@ def start_thread(thread_id: int, start_id: int, number_of_articles: int):
             CONFIG['lastSolvedArticleID'] = article_id
             solve_article(driver, article_id)
         except Exception:
-            logging.error(f'Skipping Article {article_id} due to unexpected error')
+            logging.error(f'Skipping Article {article_id} due to unexpected Error')
             # Reloads the page to clear input and closes the Leave Page Confirmation alert
             driver.refresh()
             accept_available_alert(driver)
@@ -234,23 +236,23 @@ def check_for_updates():
     if VERSION == latest:
         logging.info('No new updates found!')
         return
-    logging.info(f'Newer version v{latest} found! Please download it for maximum user experience.')
+    logging.info(f'Newer version v{latest} found! It is recommended to download it.')
 
 
 def main():
     check_for_updates()
 
-    time1 = time.perf_counter()
-
     # Creating the threads
     threads = []
     for i in range(1, CONFIG['threads'] + 1):
-        print(f'Starting thread {i}')
+        logging.info(f'Starting Thread {i}')
         thread = threading.Thread(target=start_thread,
                                   args=(i, CONFIG['lastSolvedArticleID'] + (i - 1) * CONFIG['articlesPerThread'],
                                         CONFIG['articlesPerThread']))
         threads.append(thread)
         thread.start()
+
+    time1 = time.perf_counter()
 
     # Wait for all threads to finish
     for thread in threads:
@@ -258,7 +260,10 @@ def main():
 
     time2 = time.perf_counter()
 
-    print(time2 - time1)
+    print(f'\nPROGRAM FINISHED\n'
+          f'{time2 - time1} seconds have elapsed\n'
+          f'{ARTICLES_SOLVED} articles have been solved\n'
+          f'{TOTAL_SCORE_GAINED} points have been gained\n')
 
     save_config()
     input('Press Enter to quit')
