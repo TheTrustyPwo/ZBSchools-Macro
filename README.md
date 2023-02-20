@@ -94,12 +94,12 @@ Prerequisites: Cookie Editor browser extension, Chrome version 110 (Latest as of
 
 This is a list of configurable options in the `config.json` file and what they mean.
 
-| Configurable             | Description                                                                                                                                             | Default | Datatype |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|---------|----------|
-| `lastProcessedArticleID` | Saves the last processed article ID to prevent repeated processing. Do not modify this unless you know what you are doing.                              | 14      | int      |
-| `articlesPerSession`     | Number of articles the script will process every time you run it. Once it processes that many articles, it will stop and exit.                          | 100     | int      |
-| `threads`                | Number of threads to run. More threads means that the script will be able to solve more articles concurrently, but will also use more system resources. | 4       | int      | 
-| `headless`               | If set to true, the browser will be invisible which increases performance. It is recommended to turn this on for quicker solving.                       | false   | bool     |
+| Configurable             | Description                                                                                                                                                                  | Default | Datatype |
+|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|----------|
+| `lastProcessedArticleID` | Saves the last processed article ID to prevent repeated processing. Do not modify this unless you know what you are doing.                                                   | 14      | int      |
+| `articlesPerSession`     | Number of articles the script will process every time you run it. Once it processes that many articles, it will stop and exit.                                               | 100     | int      |
+| `threads`                | Number of threads to run. More threads means that the script will be able to solve more articles concurrently, but will also use more system resources.                      | 4       | int      | 
+| `headless`               | If set to true, the browser will be invisible which increases performance. It is recommended to turn this on for quicker solving, especially when multiple threads are used. | false   | bool     |
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
