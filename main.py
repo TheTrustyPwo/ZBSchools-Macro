@@ -18,7 +18,7 @@ from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 
 # Initialize constants
-VERSION = '1.3'
+VERSION = '2.0'
 MCQ_CHOICE = ('A', 'B', 'C', 'D')
 PASSAGE_TEMPLATE_URL = 'https://www.zbschools.sg/stories-{id}'
 QUESTION_TEMPLATE_URL = 'https://www.zbschools.sg/cos/o.x?c=/ca7_zbs/zbs&func=quiz&tid=1&rid={id}&litebox=0&popup=1'
@@ -262,9 +262,9 @@ def main():
     start_id = CONFIG['lastProcessedArticleID'] + 1
     amount = CONFIG['articlesPerSession']
     pool.map(solve_article, range(start_id, start_id + amount))
+    time2 = time.perf_counter()
     del threadLocal
     pool.close()
-    time2 = time.perf_counter()
 
     print(f'\nPROGRAM FINISHED\n'
           f'{time2 - time1} seconds have elapsed\n'

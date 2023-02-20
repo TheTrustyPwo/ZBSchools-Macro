@@ -52,16 +52,14 @@
 
 This is a rather simple Python script which makes use of Selenium's ability
 to interact with the web browser to create a sophisticated bot capable of solving
-most questions with absolute precision. With this implementation, an article would be
-solved in roughly 3.5 seconds, and after some benchmarking, it was found that 4 million
-points could be obtained within the timespan of 24 hours, if the script is continuously
-running of course.
+most questions with absolute precision.
 
 Some awesome features:
 * Lightweight
 * Runs in the background
 * Solves nearly all questions
-* Gain 4 million points per day
+* Multi threaded
+* Gain 12 million points per day (On 6 Threads)
 * Instant setup and configurable
 
 ### Disclaimer
@@ -83,7 +81,7 @@ Prerequisites: Cookie Editor browser extension, Chrome version 110 (Latest as of
 3. In the extracted folder, you should see 3 files, namely `main.exe`, `config.json` and `cookies.json`
 4. Go to <a href="https://www.zbschools.sg/">ZBSchools</a> and sign in
 5. Using the <a href="https://chrome.google.com/webstore/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm?hl=en">Cookie Editor</a> extension, export your cookies which should copy them to your clipboard
-6. Open cookies.json and clear all the text in the file and paste your cookies in
+6. Open `cookies.json` and clear all the text in the file and paste your cookies in
 7. Note that you need to do this every time your cookies change (Which depends on your activity)
 8. Modify `config.json` to your liking. Refer to the section below.
 9. Finally, run main.exe which will open a terminal
@@ -96,11 +94,12 @@ Prerequisites: Cookie Editor browser extension, Chrome version 110 (Latest as of
 
 This is a list of configurable options in the `config.json` file and what they mean.
 
-| Configurable          | Description                                                                                                                       | Default | Datatype |
-|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------|---------|----------|
-| `lastSolvedArticleID` | Saves the last solved article ID to prevent repeated solving. Do not modify this unless you know what you are doing.              | 14      | int      |
-| `articlesPerSession`  | Number of articles the script will solve every time you run it. Once it solves that many articles, it will stop and exit.         | 100     | int      |
-| `headless`            | If set to true, the browser will be invisible which increases performance. It is recommended to turn this on for quicker solving. | false   | bool     |
+| Configurable             | Description                                                                                                                                             | Default | Datatype |
+|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|---------|----------|
+| `lastProcessedArticleID` | Saves the last processed article ID to prevent repeated processing. Do not modify this unless you know what you are doing.                              | 14      | int      |
+| `articlesPerSession`     | Number of articles the script will process every time you run it. Once it processes that many articles, it will stop and exit.                          | 100     | int      |
+| `threads`                | Number of threads to run. More threads means that the script will be able to solve more articles concurrently, but will also use more system resources. | 4       | int      | 
+| `headless`               | If set to true, the browser will be invisible which increases performance. It is recommended to turn this on for quicker solving.                       | false   | bool     |
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
