@@ -1,14 +1,15 @@
 import json
 import logging
+import os
 import random
 import re
 import sys
+import threading
 import time
 import traceback
-import threading
+from multiprocessing.pool import ThreadPool
 
 import requests
-import selenium.common
 from pypinyin import pinyin
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -27,14 +28,15 @@ ARTICLES_SOLVED = 0
 TOTAL_SCORE_GAINED = 0
 CONFIG_LOCK = threading.Lock()
 
+os.environ['WDM_LOG'] = '0'  # Silence webdriver log messages
 logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
 
 # Load from configuration file
 with open('config.json', 'r') as fp:
     CONFIG = json.load(fp)
 
-logging.info(f'LAST SOLVED ARTICLE ID: {CONFIG["lastSolvedArticleID"]}')
-logging.info(f'ARTICLES PER THREAD: {CONFIG["articlesPerThread"]}')
+logging.info(f'LAST PROCESSED ARTICLE ID: {CONFIG["lastProcessedArticleID"]}')
+logging.info(f'ARTICLES PER SESSION: {CONFIG["articlesPerSession"]}')
 logging.info(f'THREADS: {CONFIG["threads"]}')
 logging.info(f'HEADLESS: {CONFIG["headless"]}')
 
@@ -48,6 +50,25 @@ def save_config():
     with open('config.json', 'w') as fp:
         json.dump(CONFIG, fp, indent=4)
     CONFIG_LOCK.release()
+
+
+def suppress_exception():
+    """
+    Decorator to suppress any error thrown by a function
+    :return:
+    """
+
+    def decorate(f):
+        def applicator(*args, **kwargs):
+            # noinspection PyBroadException
+            try:
+                return f(*args, **kwargs)
+            except Exception:
+                return
+
+        return applicator
+
+    return decorate
 
 
 def show_exception_and_exit(exc_type, exc_value, tb):
@@ -67,11 +88,49 @@ def show_exception_and_exit(exc_type, exc_value, tb):
 # Overriding exception handler
 sys.excepthook = show_exception_and_exit
 
-service = Service(ChromeDriverManager().install())
-options = webdriver.ChromeOptions()
-options.add_experimental_option('excludeSwitches', ['enable-logging'])
-if CONFIG['headless']:
-    options.add_argument('--headless')
+
+class Driver:
+    def __init__(self):
+        service = Service(ChromeDriverManager().install())
+        options = webdriver.ChromeOptions()
+        options.add_experimental_option('excludeSwitches', ['enable-logging'])
+
+        if CONFIG['headless']:
+            options.add_argument('--headless')
+
+        # Create a new instance of the Chrome driver
+        self.driver = webdriver.Chrome(service=service, options=options)
+
+        # Initialize cookies
+        # Enables network tracking to use the Network.setCookie method
+        self.driver.execute_cdp_cmd('Network.enable', {})
+
+        with open('cookies.json', 'r') as fp:
+            data = json.load(fp)
+            for cookie in data:
+                cookie["sameSite"] = "None"  # Overrides null value when exported from CookieEditor
+                self.driver.execute_cdp_cmd('Network.setCookie', cookie)  # Actually set the cookie
+
+        # Disable network tracking to not affect performance
+        self.driver.execute_cdp_cmd('Network.disable', {})
+
+    def __del__(self):
+        self.driver.quit()
+
+
+threadLocal = threading.local()
+
+
+def get_driver():
+    """
+    Function to get the webdriver from the local thread, creating one if it does not exist
+    :return:
+    """
+    driver = getattr(threadLocal, 'driver', None)
+    if driver is None:
+        driver = Driver()
+        setattr(threadLocal, 'driver', driver)
+    return driver.driver
 
 
 def clean(text: str) -> str:
@@ -88,35 +147,32 @@ def clean(text: str) -> str:
     return text
 
 
-def set_cookies(driver: webdriver):
+@suppress_exception()
+def accept_available_alert():
     """
-    Utility function to set the necessary cookies for the webdriver
-    :param driver: The WebDriver to set cookies on
+    Utility function to accept an alert if available
     :return:
     """
-    # Enables network tracking to use the Network.setCookie method
-    driver.execute_cdp_cmd('Network.enable', {})
-
-    with open('cookies.json', 'r') as fp:
-        data = json.load(fp)
-        for cookie in data:
-            cookie["sameSite"] = "None"  # Overrides null value when exported from CookieEditor
-            driver.execute_cdp_cmd('Network.setCookie', cookie)  # Actually set the cookie
-
-    # Disable network tracking to not affect performance
-    driver.execute_cdp_cmd('Network.disable', {})
+    Alert(get_driver()).accept()
 
 
-def solve_article(driver: webdriver, article_id: int):
+@suppress_exception()
+def solve_article(article_id: int):
     """
     Function to process an article, and solve its questions
-    :param driver: The WebDriver
     :param article_id: ID of the article, i.e. the number after `stories-`
     :return:
     """
     global ARTICLES_SOLVED, TOTAL_SCORE_GAINED
+    driver = get_driver()
     logging.debug(f'Processing Article {article_id}')
     driver.get(PASSAGE_TEMPLATE_URL.format(id=article_id))
+    accept_available_alert()
+
+    # Update last processed article
+    if article_id > CONFIG['lastProcessedArticleID']:
+        CONFIG['lastProcessedArticleID'] = article_id
+        save_config()
 
     # Process passage text to be used to answer questions later on
     paragraphs = driver.find_elements(By.CLASS_NAME, 'zbs_sent')
@@ -175,55 +231,11 @@ def solve_article(driver: webdriver, article_id: int):
     driver.execute_script('$(".cscore").text(1000);')
 
     # Submit
-    try:
-        driver.find_element(By.CLASS_NAME, 'btn-submit').click()
-        score = int(driver.find_element(By.CLASS_NAME, 'score').find_element(By.TAG_NAME, 'span').text[:-2]) + 100
-        logging.info(f'Solved Article {article_id} (+{score} points)')
-        ARTICLES_SOLVED += 1
-        TOTAL_SCORE_GAINED += score
-    except selenium.common.NoSuchElementException:
-        # May happen occasionally
-        return
-
-
-def accept_available_alert(driver: webdriver):
-    """
-    Utility function to accept an alert if available
-    :param driver: The WebDriver
-    :return:
-    """
-    try:
-        Alert(driver).accept()
-    except selenium.common.NoAlertPresentException:
-        pass
-
-
-def start_thread(thread_id: int, start_id: int, number_of_articles: int):
-    """
-    Function to start a new thread to solve articles
-    :param thread_id: ID of the thread for identification purposes and for it to know which articles to do
-    :param start_id: The ID of the article this thread should start solving from
-    :param number_of_articles: Number of articles this thread should do
-    :return:
-    """
-    # Create a new instance of the Chrome driver
-    driver = webdriver.Chrome(service=service, options=options)
-
-    # Initialize cookies
-    set_cookies(driver)
-
-    for article_id in range(start_id, start_id + number_of_articles):
-        # noinspection PyBroadException
-        try:
-            CONFIG['lastSolvedArticleID'] = article_id
-            solve_article(driver, article_id)
-        except Exception:
-            logging.error(f'Skipping Article {article_id} due to unexpected Error')
-            # Reloads the page to clear input and closes the Leave Page Confirmation alert
-            driver.refresh()
-            accept_available_alert(driver)
-
-    # driver.quit()
+    driver.find_element(By.CLASS_NAME, 'btn-submit').click()
+    score = int(driver.find_element(By.CLASS_NAME, 'score').find_element(By.TAG_NAME, 'span').text[:-2]) + 100
+    logging.info(f'Solved Article {article_id} (+{score} points)')
+    ARTICLES_SOLVED += 1
+    TOTAL_SCORE_GAINED += score
 
 
 def check_for_updates():
@@ -232,7 +244,8 @@ def check_for_updates():
     :return:
     """
     logging.info('Checking for updates...')
-    latest = requests.get('https://raw.githubusercontent.com/TheTrustyPwo/ZBSchools-Macro/master/version.txt').text.partition('\n')[0]
+    version_url = 'https://raw.githubusercontent.com/TheTrustyPwo/ZBSchools-Macro/master/version.txt'
+    latest = requests.get(version_url).text.partition('\n')[0]
     if VERSION == latest:
         logging.info('No new updates found!')
         return
@@ -242,22 +255,10 @@ def check_for_updates():
 def main():
     check_for_updates()
 
-    # Creating the threads
-    threads = []
-    for i in range(1, CONFIG['threads'] + 1):
-        logging.info(f'Starting Thread {i}')
-        thread = threading.Thread(target=start_thread,
-                                  args=(i, CONFIG['lastSolvedArticleID'] + (i - 1) * CONFIG['articlesPerThread'],
-                                        CONFIG['articlesPerThread']))
-        threads.append(thread)
-        thread.start()
-
     time1 = time.perf_counter()
-
-    # Wait for all threads to finish
-    for thread in threads:
-        thread.join()
-
+    start_id = CONFIG['lastProcessedArticleID'] + 1
+    amount = CONFIG['articlesPerSession']
+    ThreadPool(CONFIG['threads']).map(solve_article, range(start_id, start_id + amount))
     time2 = time.perf_counter()
 
     print(f'\nPROGRAM FINISHED\n'
