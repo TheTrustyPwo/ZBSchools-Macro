@@ -59,7 +59,7 @@ Some awesome features:
 * Runs in the background
 * Solves nearly all questions
 * Multi threaded
-* Gain 12 million points per day (On 6 Threads)
+* Gain 25 million points per day (On 6 Threads)
 * Instant setup and configurable
 
 ### Disclaimer
