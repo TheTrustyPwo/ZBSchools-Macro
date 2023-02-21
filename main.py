@@ -19,7 +19,7 @@ from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 
 # Initialize constants
-VERSION = '2.0'
+VERSION = '3.0'
 MCQ_CHOICE = ('A', 'B', 'C', 'D')
 PASSAGE_TEMPLATE_URL = 'https://www.zbschools.sg/stories-{id}'
 QUESTION_TEMPLATE_URL = 'https://www.zbschools.sg/cos/o.x?c=/ca7_zbs/zbs&func=quiz&tid=1&rid={id}&litebox=0&popup=1'
