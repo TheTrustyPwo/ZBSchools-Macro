@@ -8,6 +8,7 @@ import threading
 import time
 import traceback
 from multiprocessing.pool import ThreadPool
+from bs4 import BeautifulSoup
 
 import requests
 from pypinyin import pinyin
@@ -37,10 +38,12 @@ logging.info(f'THREADS: {CONFIG["threads"]}')
 logging.info(f'HEADLESS: {CONFIG["headless"]}')
 
 # Load cookie file
+REQUEST_COOKIES = {}
 with open('cookies.json', 'r') as fp:
     COOKIES = json.load(fp)
     for cookie in COOKIES:
         cookie["sameSite"] = "None"  # Overrides null value when exported from CookieEditor
+        REQUEST_COOKIES[cookie['name']] = cookie['value']  # Setting cookie dict for requests library
 
 # Global Variables
 ARTICLES_SOLVED = 0
@@ -144,7 +147,7 @@ def clean(text: str) -> str:
     :return:
     """
     special = ('\n', '\t', ' ')
-    punctuation = ('“', '”', '。', '，', '、', '：', '？', ';', '！', '(', ')', '[', ']', '{', '}', '《', '》', '…', '·', "'")
+    punctuation = ('“', '”', '。', '，', '、', '：', '？', ';', '！', '(', ')', '[', ']', '{', '}', '《', '》', '…', '·', "'", '　', '／', '（', '）', '—')
     for symbol in special + punctuation:
         text = text.replace(symbol, '')
     return text
@@ -169,27 +172,32 @@ def solve_article(article_id: int):
     global ARTICLES_SOLVED, TOTAL_SCORE_GAINED
     driver = get_driver()
     logging.debug(f'Processing Article {article_id}')
-    driver.get(PASSAGE_TEMPLATE_URL.format(id=article_id))
-    accept_available_alert()
 
     # Update last processed article
     if article_id > CONFIG['lastProcessedArticleID']:
         CONFIG['lastProcessedArticleID'] = article_id
         save_config()
 
-    # Process passage text to be used to answer questions later on
-    paragraphs = driver.find_elements(By.CLASS_NAME, 'zbs_sent')
+    # Scrap article contents and beautiful soup
+    page = requests.get(PASSAGE_TEMPLATE_URL.format(id=article_id), cookies=REQUEST_COOKIES)
+    soup = BeautifulSoup(page.content, 'html.parser')
+
+    # Removing pinying text
+    for py in soup.find_all('span', class_='term_py'):
+        py.decompose()
+
+    paragraphs = soup.find_all('span', class_='zbs_sent')
 
     # Invalid article as there are no paragraphs
     if not paragraphs:
         logging.warning(f'Skipping Invalid Article {article_id}')
         return
 
-    # Process and clean paragraphs into passage variable
     passage = ''.join(list(map(lambda v: v.text, paragraphs)))
     passage = clean(passage)
 
     driver.get(QUESTION_TEMPLATE_URL.format(id=article_id))
+    accept_available_alert()
 
     # Finding question elements
     questions = driver.find_elements(By.CLASS_NAME, 'quiz_question')
