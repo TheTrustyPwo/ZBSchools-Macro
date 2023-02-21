@@ -23,11 +23,6 @@ MCQ_CHOICE = ('A', 'B', 'C', 'D')
 PASSAGE_TEMPLATE_URL = 'https://www.zbschools.sg/stories-{id}'
 QUESTION_TEMPLATE_URL = 'https://www.zbschools.sg/cos/o.x?c=/ca7_zbs/zbs&func=quiz&tid=1&rid={id}&litebox=0&popup=1'
 
-# Global Variables
-ARTICLES_SOLVED = 0
-TOTAL_SCORE_GAINED = 0
-CONFIG_LOCK = threading.Lock()
-
 os.environ['WDM_LOG'] = '0'  # Silence webdriver log messages
 logging.getLogger(requests.packages.urllib3.__package__).setLevel(logging.ERROR)
 logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
@@ -40,6 +35,23 @@ logging.info(f'LAST PROCESSED ARTICLE ID: {CONFIG["lastProcessedArticleID"]}')
 logging.info(f'ARTICLES PER SESSION: {CONFIG["articlesPerSession"]}')
 logging.info(f'THREADS: {CONFIG["threads"]}')
 logging.info(f'HEADLESS: {CONFIG["headless"]}')
+
+# Load cookie file
+with open('cookies.json', 'r') as fp:
+    COOKIES = json.load(fp)
+    for cookie in COOKIES:
+        cookie["sameSite"] = "None"  # Overrides null value when exported from CookieEditor
+
+# Global Variables
+ARTICLES_SOLVED = 0
+TOTAL_SCORE_GAINED = 0
+CONFIG_LOCK = threading.Lock()
+SERVICE = Service(ChromeDriverManager().install())
+OPTIONS = webdriver.ChromeOptions()
+OPTIONS.add_experimental_option('excludeSwitches', ['enable-logging'])
+
+if CONFIG['headless']:
+    OPTIONS.add_argument('--headless')
 
 
 def save_config():
@@ -92,25 +104,15 @@ sys.excepthook = show_exception_and_exit
 
 class Driver:
     def __init__(self):
-        service = Service(ChromeDriverManager().install())
-        options = webdriver.ChromeOptions()
-        options.add_experimental_option('excludeSwitches', ['enable-logging'])
-
-        if CONFIG['headless']:
-            options.add_argument('--headless')
-
         # Create a new instance of the Chrome driver
-        self.driver = webdriver.Chrome(service=service, options=options)
+        self.driver = webdriver.Chrome(service=SERVICE, options=OPTIONS)
 
         # Initialize cookies
         # Enables network tracking to use the Network.setCookie method
         self.driver.execute_cdp_cmd('Network.enable', {})
 
-        with open('cookies.json', 'r') as fp:
-            data = json.load(fp)
-            for cookie in data:
-                cookie["sameSite"] = "None"  # Overrides null value when exported from CookieEditor
-                self.driver.execute_cdp_cmd('Network.setCookie', cookie)  # Actually set the cookie
+        for cookie in COOKIES:
+            self.driver.execute_cdp_cmd('Network.setCookie', cookie)
 
         # Disable network tracking to not affect performance
         self.driver.execute_cdp_cmd('Network.disable', {})
@@ -262,6 +264,7 @@ def main():
     start_id = CONFIG['lastProcessedArticleID'] + 1
     amount = CONFIG['articlesPerSession']
     pool.map(solve_article, range(start_id, start_id + amount))
+    logging.info('Shutting down subprocesses and closing pool...')
     time2 = time.perf_counter()
     del threadLocal
     pool.close()
