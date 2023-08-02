@@ -1,5 +1,5 @@
 pypinyin==0.48.0
 selenium==4.8.2
-requests==2.28.2
+requests==2.31.0
 tqdm==4.64.1
 beautifulsoup4==4.11.2
